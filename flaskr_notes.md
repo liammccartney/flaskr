@@ -80,3 +80,22 @@ Functions marked `after_request()` called after a req and passed the response th
     they are not allowed to modify the request and their return values are ignored
     if an exception occurred while the request was being processed, it is passed ot each function
         otherwise *None* is passed in.
+We store our current db connection on the special `g` object that Flask provides
+    this object stores info for one request only
+    available from w/in wach function
+    **Never** store such things on other objects b/c this would not work with threaded environments
+    `g` does magic behind the scenes to ensure it does ther ight thing
+
+## Step 5: The View Functions
+### Show Entries
+this view will show all the entries stored in the db
+it listens on the root of the app and will select title and text from the db
+the one with the highest id (the newest entry) will be on top
+rows returned fromt he cursor on the db object are tuples with the columns ordered like specififed in the select statment
+ok for small apps - probably want dictionaries
+### add New Entry
+a view to let the user add new entries if logged in
+    respons only to POST requests
+    the actual form is show on the *show_entries* page
+    if everything works we will `flash()` an information message to the next req and redirect back to the *show_entries* page
+
