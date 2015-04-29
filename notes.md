@@ -176,3 +176,57 @@ ie: if the return value is a string it is converted into a response object with 
 
 if you want a view's response object use `make_response()`'
 
+## Sessions
+`session` object exists in addition to the `request` object
+allows you to store information specific to a user from one request to the next
+implemented on top of cookies, cryptographically
+requires a secret key
+```python
+from flask import Flask, session, redirect, url_for, escape, request
+
+app = Flask(__name_)
+
+@app.route('/')
+def index():
+    if 'username' in session:
+        return 'Logged in as %s' % escape(session['username'])
+    return 'You are not logged in'
+
+@app.route('/login', methods=['GET', 'POST']
+def login():
+    if request.method == 'POST':
+        session['username'] = request.form['username']
+        return redirect(url_for('index'))
+    return '''
+        <form action="" method="post">
+            <p><input type=text name=username>
+            <p><input type=submit value=Login>
+        </form>
+        '''
+
+@app.route('/logout')
+def logout():
+    #remove the username from the session if it is there
+    session.pop('username', None)
+    return redirect(url_for('index'))
+
+app.secret_key = 'ABCDEFGHI123'
+```
+
+### How to generate good secret keys:
+your operating system has wasy to generate pretty random stuff
+```python
+import os
+os.urandom(24)
+```
+
+Flask takes values you put into the session object and serialize them into a cookie
+If you find things not persisting, ensure the cookie size is supported by the browser
+
+## Message Flashing
+the flashing system basically makes it possible to record a message at the end of a request and access it on the next (and only the next) request
+Usually combined with a layout template to expose the message
+use `flash()` to get a hold of messages you can use `get_flashed_messages()`
+both available in the templates
+
+
