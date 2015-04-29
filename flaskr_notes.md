@@ -39,3 +39,23 @@ the *secret_key* is needed to keep client-side sessions secure
 NEVER LEAVE DEBUG MODE ACTIVATED IN A PRODUCTION SYSTEM
 
 we add a method `connect_db()` to easily connect to the config's specific db
+
+## Step 3: Creating the Database
+Flaskr is a db powered app - powered by a relational db system
+need to pipe schema.sql into sqlite3
+good idea to add a function to do this for you
+requires `contextlib.closing()`
+'closing()' helper function allows ut to keep a conenct open for the duration of the *with* block
+`open_resource()` method supports that function aout of the box, so it can be used in the *with* block directly
+    this function opens a file from the resouece location and allows you to read from it
+    we are using it to execute a script on the db connection
+
+when we connect we get an object (we're calling it db) th can give us a cursor
+    on that cursor is a method to execute a complete script
+    then we have to commit changes (SQLite3 does not commit implictly)
+now it is possible to create a db by starting up a Python shell and importing an calling that function
+```python
+from flaskr import init_db
+init_db()
+```
+
