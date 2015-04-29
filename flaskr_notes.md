@@ -58,4 +58,25 @@ now it is possible to create a db by starting up a Python shell and importing an
 from flaskr import init_db
 init_db()
 ```
+## Step 4: Request Db Connections
+we will need the db connectionin al our functions so it makes sense to init them befor each request
+Flask provies `before_request()`, `after_request()`, `teardown_request()` decorators
+```python
+@app.before_request
+def before_request():
+    g.db = connect_db()
 
+@app.teardown_request
+def teardown_request(exception):
+    db = getattr(g, 'db', None)
+    if db is not None:
+        db.close()
+```
+Functions marked with `before_request()` are called before a req and passed no arguments
+Functions marked `after_request()` called after a req and passed the response that will be sent to the client
+    they have to return that response object or a differentone
+    they are not guaranteed to executed if an exception is raised
+`teardown_request()` - get called after ther esponse has been constructed
+    they are not allowed to modify the request and their return values are ignored
+    if an exception occurred while the request was being processed, it is passed ot each function
+        otherwise *None* is passed in.
