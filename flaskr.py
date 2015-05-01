@@ -1,71 +1,57 @@
-# all the imports
-import sqlite3
-from flask import Flask, request, session, g, redirect, url_for, abort, render_template, flash
-from contextlib import closing
+from flask import Flask, url_for
+import dotenv
+import os
+from flask_ldap3_login import LDAP3LoginManager
+from flask_login import LoginManager, login_user, UserMixin, current_user, logout_user
+from flask import render_template_string, redirect
+from flask.ext.ldap3_login.forms import LDAPLoginForm
+import pdb
 
-# create our little application
+dotenv.load_dotenv(".env")
 app = Flask(__name__)
+app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY')
+app.config['DEBUG'] = os.environ.get('DEBUG')
 
-DATABASE = '/tmp/flaskr.db'
-DEBUG = True
-SECRET_KEY = 'development key'
-USERNAME = 'admin'
-PASSWORD = 'default'
-app.config.from_object(__name__)
+app.config['LDAP_HOST'] = os.environ.get('LDAP_HOST')
+app.config['LDAP_BASE_DN'] = os.environ.get('LDAP_BASE_DN')
 
-def connect_db():
-    return sqlite3.connect(app.config['DATABASE'])
-
-def init_db():
-    with closing(connect_db()) as db:
-        with app.open_resource('schema.sql', mode='r') as f:
-            db.cursor().executescript(f.read())
-        db.commit()
-
-@app.before_request
-def before_request():
-    g.db = connect_db()
-
-@app.teardown_request
-def teardown_request(exception):
-    db = getattr(g, 'db', None)
-    if db is not None:
-        db.close()
-
-@app.route('/')
-def show_entries():
-    cur = g.db.execute('select title, text from entries order by id desc')
-    entries = [dict(title=row[0], text=row[1]) for row in cur.fetchall()]
-    return render_template('show_entries.html', entries=entries)
-
-@app.route('/add', methods=['POST'])
-def add_entry():
-    if not session.get('logged_in'):
-        abort(401)
-    g.db.execute('insert into entries (title, text) values (?, ?)', [request.form['title'], request.form['text']])
-    g.db.commit()
-    flash('New entry was successfully posted')
-    return redirect(url_for('show_entries'))
+app.config['LDAP_USER_RDN_ATTR'] = os.environ.get('LDAP_USER_RDN_ATTR')
+app.config['LDAP_USER_LOGIN_ATTR'] = os.environ.get('LDAP_USER_LOGIN_ATTR')
+app.config['LDAP_BIND_USER_DN'] = os.environ.get('LDAP_BIND_USER_DN')
+app.config['LDAP_BIND_USER_PASSWORD'] = os.environ.get('LDAP_BIND_USER_PASSWORD')
+app.config['LDAP_USER_SEARCH_SCOPE'] = os.environ.get('LDAP_USER_SEARCH_SCOPE')
+login_manager = LoginManager(app)
+ldap_manager = LDAP3LoginManager(app)
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
-    error = None
-    if request.method == 'POST':
-        if request.form['username'] != app.config['USERNAME']:
-            error = 'Invalid username'
-        elif request.form['password'] != app.config['PASSWORD']:
-            error = 'Invalid password'
-        else:
-            session['logged_in'] = True
-            flash('You were logged in')
-            return redirect(url_for('show_entries'))
-    return render_template('login.html', error=error)
+    template = """
+    {{ get_flashed_messages() }}
+    {{ form.errors }}
+    <form method="POST">
+        <label>Username{{ form.username() }}</label>
+        <label>Password{{ form.password() }}</label>
+        {{ form.submit() }}
+        {{ form.hidden_tag() }}
+    </form>
+    """
 
+    # Instantiate a LDAPLoginForm which has a validator to check if the user
+    # exists in LDAP.
+    form = LDAPLoginForm()
+
+    if form.validate_on_submit():
+        # Successfully logged in, We can now access the saved user object
+        # via form.user.
+        login_user(form.user) # Tell flask-login to log them in.
+        return redirect('/')  # Send them home
+
+    return render_template_string(template, form=form)
 @app.route('/logout')
 def logout():
-    session.pop('logged_in', None)
-    flash('You were logged out')
-    return redirect(url_for('show_entries'))
+    logout_user()
+
+    return redirect('/')
 
 if __name__ == '__main__':
     app.run()
