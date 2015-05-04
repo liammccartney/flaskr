@@ -4,7 +4,7 @@ import os
 from flask.ext.sqlalchemy import SQLAlchemy
 from flask_ldap3_login import LDAP3LoginManager
 from flask_login import LoginManager, login_user, UserMixin, current_user, logout_user
-from flask import render_template_string, redirect
+from flask import render_template_string, redirect, render_template
 from flask.ext.ldap3_login.forms import LDAPLoginForm
 import pdb
 
@@ -83,7 +83,6 @@ def home():
     """
 
     return render_template_string(template)
-
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
