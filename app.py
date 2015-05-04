@@ -9,6 +9,7 @@ import pdb
 
 dotenv.load_dotenv(".env")
 app = Flask(__name__)
+app.config['APP_SETTINGS'] = os.environ.get('APP_SETTINGS')
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY')
 app.config['DEBUG'] = os.environ.get('DEBUG')
 
