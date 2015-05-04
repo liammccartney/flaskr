@@ -1,11 +1,19 @@
-from flask import Flask, url_for
+from flask import Flask, request, render_template_string, redirect, render_template
+import requests
 import dotenv
 import os
 from flask.ext.sqlalchemy import SQLAlchemy
 from flask_ldap3_login import LDAP3LoginManager
 from flask_login import LoginManager, login_user, UserMixin, current_user, logout_user
-from flask import render_template_string, redirect, render_template
 from flask.ext.ldap3_login.forms import LDAPLoginForm
+
+from stop_words import stops
+from collections import Counter
+from bs4 import BeautifulSoup
+
+import operator
+import re
+import nltk
 
 dotenv.load_dotenv(".env")
 
@@ -68,7 +76,7 @@ def save_user(dn, username, data, memberships):
     users[dn] = user
     return user
 
-@app.route('/')
+@app.route('/', methods=['GET', 'POST'])
 def home():
     # Redirect users who are not logged in.
     # if not current_user or current_user.is_anonymous():
@@ -81,12 +89,40 @@ def home():
         try:
             url = request.form['url']
             r = requests.get(url)
-            print(r.text)
         except:
             errors.append(
                     "can't do it, bro"
-                    )
-    return render_template('index.html', errors=errors, results=results)
+            )
+            return render_template('index.html', errors=errors, results=results)
+        if r:
+            raw = BeautifulSoup(r.text).get_text()
+            nltk.data.path.append('./nltk_data/')
+            tokens = nltk.word_tokenize(raw)
+            text = nltk.Text(tokens)
+
+            nonPunct = re.compile('.*[A-Za-z].*')
+            raw_words = [w for w in text if nonPunct.match(w)]
+            raw_words_count = Counter(raw_words)
+
+            no_stop_words = [w for w in raw_words if w.lower() not in stops]
+            no_stop_words_count = Counter(no_stop_words)
+
+            results = sorted(
+                    no_stop_words_count.items(),
+                    key = operator.itemgetter(1),
+                    reverse=True
+             )
+            try:
+                result = Result(
+                        url=url,
+                        result_all=raw_words_count,
+                        result_no_stop_words=no_stop_words_count
+                )
+                db.session.add(result)
+                db.session.commit()
+            except:
+                errors.append('Unable to add item to db')
+        return render_template('index.html', errors=errors, results=results)
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
