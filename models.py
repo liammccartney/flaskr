@@ -1,8 +1,9 @@
 from app import db
 from sqlalchemy.dialects.postgresql import JSON
 
+
 class Result(db.Model):
-    __table__name = 'results'
+    __tablename__ = 'results'
 
     id = db.Column(db.Integer, primary_key=True)
     url = db.Column(db.String())
@@ -16,4 +17,3 @@ class Result(db.Model):
 
     def __repr__(self):
         return '<id {}>'.format(self.id)
-
