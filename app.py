@@ -29,7 +29,6 @@ app.config['LDAP_BIND_USER_PASSWORD'] = os.environ.get('LDAP_BIND_USER_PASSWORD'
 app.config['LDAP_USER_SEARCH_SCOPE'] = os.environ.get('LDAP_USER_SEARCH_SCOPE')
 login_manager = LoginManager(app)
 ldap_manager = LDAP3LoginManager(app)
-
 users = {}
 
 # Declare an Object Model for the user, and make it comply with the
