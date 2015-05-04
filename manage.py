@@ -3,7 +3,7 @@ from flask.ext.migrate import Migrate, MigrateCommand
 import os
 import dotenv
 from app import app, db
-dotenv.load('.env')
+dotenv.load_dotenv('.env')
 app.config.from_object(os.environ['APP_SETTINGS'])
 
 migrate = Migrate(app, db)
