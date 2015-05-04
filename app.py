@@ -6,7 +6,6 @@ from flask_ldap3_login import LDAP3LoginManager
 from flask_login import LoginManager, login_user, UserMixin, current_user, logout_user
 from flask import render_template_string, redirect, render_template
 from flask.ext.ldap3_login.forms import LDAPLoginForm
-import pdb
 
 dotenv.load_dotenv(".env")
 
@@ -72,16 +71,22 @@ def save_user(dn, username, data, memberships):
 @app.route('/')
 def home():
     # Redirect users who are not logged in.
-    if not current_user or current_user.is_anonymous():
-        return redirect(url_for('login'))
+    # if not current_user or current_user.is_anonymous():
+        # return redirect(url_for('login'))
 
     # User is logged in, so show them a page with their cn and dn.
-    template = """
-    <h1>Welcome: {{ current_user.data.cn }}</h1>
-    <h2>{{ current_user.dn }}</h2>
-    """
-
-    return render_template_string(template)
+    errors = []
+    results = {}
+    if request.method == 'POST':
+        try:
+            url = request.form['url']
+            r = requests.get(url)
+            print(r.text)
+        except:
+            errors.append(
+                    "can't do it, bro"
+                    )
+    return render_template('index.html', errors=errors, results=results)
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
