@@ -1,6 +1,6 @@
 import os
 import dotenv
-dotenv.load('.env')
+dotenv.load_dotenv('.env')
 
 class Config(object):
     DEBUG = False
