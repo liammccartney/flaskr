@@ -13,6 +13,7 @@ import requests
 import re
 import nltk
 import dotenv
+import pdb
 
 
 #################
@@ -24,7 +25,7 @@ app.config.from_object(os.environ['APP_SETTINGS'])
 db = SQLAlchemy(app)
 
 q = Queue(connection=conn)
-
+# pdb.set_trace()
 from models import Result
 
 
@@ -90,10 +91,10 @@ def get_counts():
     if 'http://' not in url[:7]:
         url = 'http://' + url
 
-    job = q.enque_call(
+    job = q.enqueue_call(
             func=count_and_save_words, args=(url,), result_ttl=5000
         )
-    return job.get_id
+    return job.get_id()
 
 @app.route("/results/<job_key>", methods=['GET'])
 def get_results(job_key):
